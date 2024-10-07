@@ -17,7 +17,7 @@ def process_pdf():
         default_dir = os.path.join(os.getcwd(), user)
         os.makedirs(default_dir, exist_ok=True)
         
-        pdf_path_origin = os.path.join(default_dir, f"{str(pdf.filename).replace(".pdf", "")}.pdf")
+        pdf_path_origin = os.path.join(default_dir, f'{str(pdf.filename).replace(".pdf", "")}.pdf')
         pdf.save(pdf_path_origin)
 
         pdf_file = fitz.open(pdf_path_origin)

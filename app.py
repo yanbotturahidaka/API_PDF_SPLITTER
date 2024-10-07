@@ -34,7 +34,7 @@ def process_pdf():
                     pdf_writer = PyPDF2.PdfWriter()
                     pdf_writer.add_page(pdf_reader.pages[page_num])
 
-                    files_output = os.path.join(output_dir, f'{str(pdf.filename).replace('.pdf', '')}_{page_num + 1}.pdf')
+                    files_output = os.path.join(output_dir, f"{str(pdf.filename).replace('.pdf', '')}_{page_num + 1}.pdf")
                     with open(files_output, 'wb') as output_file:
                         pdf_writer.write(output_file)
 

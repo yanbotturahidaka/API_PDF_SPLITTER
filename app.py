@@ -1,6 +1,5 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 import os
-import PyPDF2
 import traceback
 import base64
 import shutil

@@ -21,7 +21,7 @@ def process_pdf():
         output_dir = os.path.join("PDF_SPLITTER", user, "output_File")
         os.makedirs(output_dir, exist_ok=True)
 
-        pdf_path = os.path.join(input_dir, f'{str(pdf.filename).replace('.pdf', '')}.pdf')
+        pdf_path = os.path.join(input_dir, f"{str(pdf.filename).replace('.pdf', '')}.pdf")
         pdf.save(pdf_path)
 
         files_input = os.listdir(input_dir)

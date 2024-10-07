@@ -1,59 +1,53 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import os
 import PyPDF2
 import traceback
 import base64
+import shutil
+import fitz
 
 app = Flask(__name__)
 
 @app.route('/process_pdf', methods=['POST'])
 def process_pdf():
-
-    hash_64 = []
-
     try:
-        user = request.form['user']
+        user = request.form['user'].upper()
         pdf = request.files['pdf']
 
-        input_dir = os.path.join("PDF_SPLITTER", user, "input_File")
-        os.makedirs(input_dir, exist_ok=True)
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        default_dir = os.path.join(os.getcwd(), user)
+        os.makedirs(default_dir, exist_ok=True)
+        
+        pdf_path_origin = os.path.join(default_dir, f"{str(pdf.filename).replace(".pdf", "")}.pdf")
+        pdf.save(pdf_path_origin)
 
-        output_dir = os.path.join("PDF_SPLITTER", user, "output_File")
-        os.makedirs(output_dir, exist_ok=True)
+        pdf_file = fitz.open(pdf_path_origin)
+        for page_number in range(len(pdf_file)):
+            pdf_page = fitz.open()
+            pdf_page.insert_pdf(pdf_file, from_page=page_number, to_page=page_number)
 
-        pdf_path = os.path.join(input_dir, f"{str(pdf.filename).replace('.pdf', '')}.pdf")
-        pdf.save(pdf_path)
+            pdf_path_end = os.path.join(default_dir, f'{str(pdf.filename).replace(".pdf", "")}_{page_number + 1}.pdf')
+            pdf_page.save(pdf_path_end)
+            pdf_page.close()
 
-        files_input = os.listdir(input_dir)
+        pdf_file.close()
+        os.remove(pdf_path_origin)
 
-        for file_pdf_input in files_input:
-            with open(os.path.join(input_dir, file_pdf_input), 'rb') as file_input:
-                pdf_reader = PyPDF2.PdfReader(file_input)
+        pdf_files = os.listdir(default_dir)
 
-                for page_num in range(len(pdf_reader.pages)):
-                    pdf_writer = PyPDF2.PdfWriter()
-                    pdf_writer.add_page(pdf_reader.pages[page_num])
-
-                    files_output = os.path.join(output_dir, f"{str(pdf.filename).replace('.pdf', '')}_{page_num + 1}.pdf")
-                    with open(files_output, 'wb') as output_file:
-                        pdf_writer.write(output_file)
-
-                    print(f"Página {page_num + 1} salva como {files_output}")
-
-        files_output = os.listdir(output_dir)
-
-        for file_pdf_output in files_output:
-            with open(os.path.join(output_dir, file_pdf_output), 'rb') as file_output:
-                encoded_str = base64.b64encode(file_output.read()).decode('utf-8')
+        for pdf_file in pdf_files:
+            with open(os.path.join(default_dir, pdf_file), 'rb') as pdf:
+                encoded_str = base64.b64encode(pdf.read()).decode('utf-8')
                 app.logger.info(encoded_str)
                 app.logger.info('\n')
-
-        return jsonify({"result": "Processo Finalizado.", "Hash 64:": 'Abacaxi'})
-    
+                
+        shutil.rmtree(default_dir)
+        
+        return jsonify({"result": "Processo Finalizado.", "message": 'Arquivo foi processado com sucesso.'})
     except Exception as e:
 
         traceback_text = traceback.format_exc()
         return jsonify({"result": "error", "message": str(traceback_text)})
-    
+
 if __name__ == '__main__':
     app.run(debug=True)
